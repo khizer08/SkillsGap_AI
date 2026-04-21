@@ -18,6 +18,7 @@
 
 cd skillgap-ai/backend
 & "C:\Users\YOUR_USERNAME\AppData\Local\Programs\Python\Python311\python.exe" -m venv venv
+& "C:\Users\Syed khizer\AppData\Local\Programs\Python\Python311\python.exe" -m venv venv
 .\venv\Scripts\Activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
