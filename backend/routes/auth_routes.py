@@ -3,6 +3,7 @@ OTP email authentication routes.
 """
 
 import logging
+import os
 
 from fastapi import APIRouter, Depends, Response
 
@@ -13,6 +14,9 @@ from services.jwt_service import JWT_EXPIRY_DAYS
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() == "true"
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")
 
 
 @router.post("/auth/request-otp", response_model=AuthMessageResponse)
@@ -36,8 +40,8 @@ async def verify_otp(payload: OtpVerifyRequest, response: Response):
         key="access_token",
         value=result["access_token"],
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
         max_age=JWT_EXPIRY_DAYS * 24 * 60 * 60,
     )
     logger.info("Auth OTP verified: email=%s", payload.email)

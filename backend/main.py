@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import logging
+import os
 
 from config.database import connect_db, disconnect_db
 from config.chroma import init_chroma
@@ -40,10 +41,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware - allow React frontend
+# CORS middleware - allow local frontend by default, configurable for deployment
+default_origins = ["http://localhost:3000", "http://localhost:5173"]
+cors_origins_raw = os.getenv("CORS_ORIGINS", "")
+allowed_origins = [origin.strip() for origin in cors_origins_raw.split(",") if origin.strip()] or default_origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

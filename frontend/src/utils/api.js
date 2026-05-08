@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   timeout: 120000, // Gemini calls can take longer than regular API calls
   withCredentials: true, // send httpOnly access_token cookie on every request
 })
