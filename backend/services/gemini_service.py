@@ -113,18 +113,46 @@ def _fallback_roadmap(
         ],
         "course_recommendations": [
             {
-                "title": f"{job_role} learning path",
+                "title": f"{job_role} complete learning path",
                 "platform": "Coursera",
                 "url": f"https://www.coursera.org/search?query={job_role.replace(' ', '+')}",
-                "duration": "Self-paced",
+                "duration": "6-12 weeks",
                 "price": "Free to audit",
             },
             {
-                "title": f"{job_role} practical tutorials",
+                "title": f"{job_role} video tutorials",
                 "platform": "YouTube",
-                "url": f"https://www.youtube.com/results?search_query={job_role.replace(' ', '+')}+course",
+                "url": f"https://www.youtube.com/results?search_query={job_role.replace(' ', '+')}", 
                 "duration": "Self-paced",
                 "price": "Free",
+            },
+            {
+                "title": f"{job_role} hands-on courses",
+                "platform": "Udemy",
+                "url": f"https://www.udemy.com/courses/search/?q={job_role.replace(' ', '+')}",
+                "duration": "10-40 hours",
+                "price": "$10-50",
+            },
+            {
+                "title": f"Learn {job_role} fundamentals",
+                "platform": "freeCodeCamp",
+                "url": f"https://www.freecodecamp.org/news/search/?query={job_role.replace(' ', '+')}",
+                "duration": "Self-paced",
+                "price": "Free",
+            },
+            {
+                "title": f"{job_role} professional certification",
+                "platform": "LinkedIn Learning",
+                "url": f"https://www.linkedin.com/learning/search?keywords={job_role.replace(' ', '+')}",
+                "duration": "4-8 weeks",
+                "price": "Free trial",
+            },
+            {
+                "title": f"{job_role} on edX",
+                "platform": "edX",
+                "url": f"https://www.edx.org/search?q={job_role.replace(' ', '+')}",
+                "duration": "8-12 weeks",
+                "price": "Free or paid",
             },
         ],
     }
@@ -208,8 +236,15 @@ Rules:
 - weeks must contain exactly {num_weeks} objects.
 - Each week object must contain: week, topic, tasks, resources, project.
 - tasks must be an array of practical actions.
-- resources must be an array of useful URLs or platform names.
+- resources must be an array of working URLs to documentation, tutorials, or learning materials.
+- Each resource should be a complete HTTPS URL that actually exists and is accessible.
 - project_suggestions and course_recommendations must be arrays of objects.
+
+For course_recommendations:
+- Each object must have: title, platform, url, duration, price
+- url must be a working HTTPS link to that platform (e.g., Coursera, Udemy, YouTube, freeCodeCamp, LinkedIn Learning, edX)
+- Include 5-6 diverse course recommendations from different platforms
+- For search-based platforms, generate URLs with query parameters for the job_role
 """.strip()
 
     try:

@@ -232,7 +232,7 @@ export default function LoginPage() {
               SkillGap <span className="text-primary-500">AI</span>
             </span>
           </div>
-          <p className="text-slate-500 text-sm">
+          <p className="text-white/70 text-sm">
             {step === 'email'
               ? 'Sign in to access your career intelligence dashboard'
               : `Enter the code sent to ${email}`}
@@ -245,11 +245,11 @@ export default function LoginPage() {
           {step === 'email' && (
             <form onSubmit={handleRequestOtp} className="space-y-5">
               <div>
-                <label htmlFor="login-email" className="block text-sm font-medium text-slate-300 mb-2">
+                <label htmlFor="login-email" className="block text-sm font-medium text-white mb-2">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40" />
                   <input
                     id="login-email"
                     type="email"
@@ -291,14 +291,14 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white/80 transition-colors"
               >
                 <ArrowLeft size={14} /> Change email
               </button>
 
               {/* OTP Inputs */}
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-3">
+                <label className="block text-sm font-medium text-white mb-3">
                   <ShieldCheck size={14} className="inline mr-1.5 -mt-0.5" />
                   Verification Code
                 </label>
@@ -325,7 +325,7 @@ export default function LoginPage() {
               {/* Countdown */}
               {countdown > 0 && (
                 <div className="text-center">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-white/60">
                     Code expires in{' '}
                     <span className={`font-mono font-semibold ${countdown <= 30 ? 'text-red-400 animate-pulse' : 'text-primary-400'}`}>
                       {formatTime(countdown)}
@@ -361,7 +361,7 @@ export default function LoginPage() {
               {/* Resend */}
               <div className="text-center pt-1">
                 {countdown > 0 ? (
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-white/60">
                     Resend available in {formatTime(countdown)}
                   </p>
                 ) : (
@@ -369,7 +369,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleResend}
                     disabled={loading || resendCount >= 3}
-                    className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors disabled:text-slate-600 disabled:cursor-not-allowed"
+                    className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300 transition-colors disabled:text-white/40 disabled:cursor-not-allowed"
                   >
                     <RefreshCw size={12} />
                     {resendCount >= 3
@@ -398,7 +398,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-600 mt-8">
+        <p className="text-center text-xs text-white/60 mt-8">
           We'll send a one-time code to your email. No password needed.
         </p>
       </div>

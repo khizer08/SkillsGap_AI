@@ -117,17 +117,17 @@ export default function UploadPage({ appState, updateState }) {
                   <FileText size={20} className="text-emerald-400" />
                 </div>
                 <p className="text-sm font-medium text-emerald-400 truncate px-4">{file.name}</p>
-                <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(0)} KB • Click to replace</p>
+                <p className="text-xs text-white/60">{(file.size / 1024).toFixed(0)} KB • Click to replace</p>
               </div>
             ) : (
               <div className="space-y-2">
                 <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mx-auto">
-                  <Upload size={20} className="text-slate-400" />
+                  <Upload size={20} className="text-white/60" />
                 </div>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-white/60">
                   {isDragActive ? 'Drop it here!' : 'Drag & drop or click to upload'}
                 </p>
-                <p className="text-xs text-slate-600">PDF only · Max 10MB</p>
+                <p className="text-xs text-white/50">PDF only · Max 10MB</p>
               </div>
             )}
           </div>
@@ -135,7 +135,7 @@ export default function UploadPage({ appState, updateState }) {
 
         {/* Job Target */}
         <div className="card space-y-4">
-          <h2 className="font-semibold text-slate-200 flex items-center gap-2">
+          <h2 className="font-semibold text-white flex items-center gap-2">
             <Sparkles size={16} className="text-primary-400" />
             Target Role <span className="text-red-400">*</span>
           </h2>
@@ -150,10 +150,10 @@ export default function UploadPage({ appState, updateState }) {
               <option value="">— Select a job role —</option>
               {roles.map(r => <option key={r} value={r}>{r}</option>)}
             </select>
-            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+            <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none" />
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-slate-600">
+          <div className="flex items-center gap-3 text-xs text-white/50">
             <div className="flex-1 h-px bg-white/10" />
             <span>or paste JD</span>
             <div className="flex-1 h-px bg-white/10" />

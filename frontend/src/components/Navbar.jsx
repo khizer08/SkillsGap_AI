@@ -44,7 +44,7 @@ export default function Navbar({ appState }) {
                   className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
                     active
                       ? 'bg-primary-500/15 text-primary-400'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                      : 'text-white/60 hover:text-white/80 hover:bg-white/5'
                   }`}
                 >
                   <Icon size={15} />
@@ -59,14 +59,14 @@ export default function Navbar({ appState }) {
         <div className="flex items-center gap-3">
           {isAuthenticated && user && (
             <>
-              <div className="hidden md:flex items-center gap-2 text-xs text-slate-400">
-                <User size={14} className="text-slate-500" />
+              <div className="hidden md:flex items-center gap-2 text-xs text-white/60">
+                <User size={14} className="text-white/60" />
                 <span className="max-w-[160px] truncate">{user.email}</span>
               </div>
               <button
                 onClick={() => logout()}
                 title="Logout"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-150"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white/60 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-150"
               >
                 <LogOut size={14} />
                 <span className="hidden sm:inline">Logout</span>
@@ -76,7 +76,7 @@ export default function Navbar({ appState }) {
 
           {/* Session chip — keep showing if there's an active analysis session */}
           {isAuthenticated && appState.sessionId && (
-            <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500">
+            <div className="hidden lg:flex items-center gap-2 text-xs text-white/60">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Session active
             </div>
