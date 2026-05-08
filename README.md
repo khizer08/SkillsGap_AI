@@ -1,6 +1,5 @@
 # SkillGap AI 
 # AI-Powered Career Guidance System
-
 > Upload your resume → Detect skill gaps → Get a personalized roadmap → Practice with mock interviews
 
 
