@@ -57,8 +57,8 @@ class RoadmapResult(BaseModel):
     missing_skills: List[str]
     weeks: List[RoadmapWeek]
     total_duration_weeks: int
-    project_suggestions: List[Dict[str, str]]
-    course_recommendations: List[Dict[str, str]]
+    project_suggestions: List[Dict[str, Any]]
+    course_recommendations: List[Dict[str, Any]]
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

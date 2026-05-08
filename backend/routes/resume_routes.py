@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 import uuid
 import logging
 from config.database import get_collection
+from models.schemas import ResumeAnalysis
 from services.resume_parser import parse_resume
 
 router = APIRouter()
@@ -51,12 +52,23 @@ async def upload_resume(file: UploadFile = File(...)):
     collection = get_collection("resume_analyses")
     if collection is not None:
         try:
-            doc = {
-                "session_id": session_id,
-                "filename": file.filename,
-                **parsed
-            }
-            await collection.insert_one(doc)
+            existing = await collection.find_one({"session_id": session_id}, {"_id": 1})
+            if existing is None:
+                data = ResumeAnalysis(
+                    session_id=session_id,
+                    extracted_skills=parsed["skills"],
+                    technologies=parsed["technologies"],
+                    frameworks=parsed["frameworks"],
+                    projects=parsed["projects"],
+                    raw_text_preview=parsed["raw_text_preview"]
+                )
+                insert_result = await collection.insert_one(data.dict())
+                logger.info(
+                    f"MongoDB insert successful: collection=resume_analyses, "
+                    f"session={session_id}, id={insert_result.inserted_id}"
+                )
+            else:
+                logger.info(f"Resume analysis already persisted: session={session_id}")
         except Exception as e:
             logger.warning(f"MongoDB insert failed: {e}")
 
