@@ -37,7 +37,13 @@ export default function UploadPage({ appState, updateState }) {
       // Step 1: Upload resume
       setStep('uploading')
       const { data: resumeData } = await uploadResume(file)
-      updateState({ sessionId: resumeData.session_id, resumeData })
+      updateState({
+        sessionId: resumeData.session_id,
+        resumeData,
+        roadmapData: null,
+        roadmapStatus: 'idle',
+        roadmapError: '',
+      })
 
       // Step 2: Analyze skill gap
       setStep('analyzing')
@@ -52,7 +58,13 @@ export default function UploadPage({ appState, updateState }) {
         ...(jdText.trim() && { jd_text: jdText.trim() })
       }
       const { data: analysisData } = await analyzeSkills(payload)
-      updateState({ analysisData, selectedRole: selectedRole || 'Custom JD' })
+      updateState({
+        analysisData,
+        selectedRole: selectedRole || 'Custom JD',
+        roadmapData: null,
+        roadmapStatus: 'idle',
+        roadmapError: '',
+      })
 
       setStep('done')
       navigate('/dashboard')

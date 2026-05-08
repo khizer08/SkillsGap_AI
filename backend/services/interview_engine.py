@@ -5,158 +5,29 @@ Mock Interview Engine Service
 - Scores responses 0-100
 """
 
-import os
 import json
 import logging
 import re
-import uuid
 from typing import List, Dict, Optional
-from services.roadmap_generator import call_gemini
+from services.gemini_service import call_gemini
+from services.gemini_service import generate_interview_questions as generate_gemini_interview_questions
 
 logger = logging.getLogger(__name__)
 
-# Predefined question banks per role (used as fallback + augmented by LLM)
-QUESTION_BANK = {
-    "AI Engineer": {
-        "dsa": [
-            {"q": "Implement a function to find the k-th largest element in an unsorted array.", "keywords": ["heap", "quickselect", "sorting", "O(n log k)"]},
-            {"q": "Design a data structure that supports insert, delete, and getRandom in O(1).", "keywords": ["hashmap", "array", "random", "O(1)"]},
-            {"q": "Given a graph of model dependencies, detect if there's a circular dependency.", "keywords": ["DFS", "cycle detection", "topological sort", "visited"]},
-        ],
-        "technical": [
-            {"q": "Explain the difference between gradient descent and stochastic gradient descent.", "keywords": ["batch", "convergence", "learning rate", "noise", "mini-batch"]},
-            {"q": "What is the vanishing gradient problem and how do you solve it?", "keywords": ["LSTM", "ReLU", "batch norm", "residual", "gradient clipping"]},
-            {"q": "How does attention mechanism work in transformers?", "keywords": ["query", "key", "value", "softmax", "self-attention", "multi-head"]},
-            {"q": "Explain overfitting and the methods to prevent it.", "keywords": ["regularization", "dropout", "cross-validation", "early stopping", "L1 L2"]},
-            {"q": "What is the difference between precision and recall?", "keywords": ["true positive", "false positive", "F1 score", "trade-off"]},
-        ],
-        "hr": [
-            {"q": "Tell me about a challenging ML project you built and what you learned.", "keywords": ["project", "challenge", "solution", "learned", "outcome"]},
-            {"q": "How do you stay updated with the latest AI research?", "keywords": ["papers", "arXiv", "conferences", "GitHub", "community"]},
-            {"q": "Describe a time you had to explain a complex model to a non-technical stakeholder.", "keywords": ["communication", "simplify", "visual", "business impact"]},
-        ]
-    },
-    "Data Scientist": {
-        "dsa": [
-            {"q": "Write a function to find the median of a data stream efficiently.", "keywords": ["heap", "two heaps", "median", "stream"]},
-            {"q": "Implement K-Means clustering from scratch.", "keywords": ["centroid", "iteration", "convergence", "distance", "cluster"]},
-        ],
-        "technical": [
-            {"q": "What is the difference between correlation and causation?", "keywords": ["correlation", "causation", "confounding", "experiment", "regression"]},
-            {"q": "Explain the bias-variance trade-off.", "keywords": ["bias", "variance", "underfitting", "overfitting", "complexity"]},
-            {"q": "How would you handle class imbalance in a classification problem?", "keywords": ["SMOTE", "oversampling", "undersampling", "class weight", "threshold"]},
-            {"q": "What is cross-validation and why is it important?", "keywords": ["k-fold", "generalization", "overfitting", "train-test split"]},
-        ],
-        "hr": [
-            {"q": "Describe an analysis you conducted that drove a significant business decision.", "keywords": ["data", "insight", "decision", "impact", "stakeholder"]},
-            {"q": "How do you communicate findings to non-technical executives?", "keywords": ["visualization", "summary", "business terms", "dashboard"]},
-        ]
-    },
-    "Full Stack Developer": {
-        "dsa": [
-            {"q": "Implement a LRU (Least Recently Used) cache.", "keywords": ["doubly linked list", "hashmap", "O(1)", "eviction"]},
-            {"q": "Design a URL shortener (like bit.ly). What data structures would you use?", "keywords": ["hashmap", "base62", "database", "collision", "redirect"]},
-            {"q": "How would you implement pagination for a large dataset?", "keywords": ["cursor", "offset", "limit", "index", "performance"]},
-        ],
-        "technical": [
-            {"q": "Explain the difference between REST and GraphQL.", "keywords": ["REST", "GraphQL", "over-fetching", "schema", "resolver", "mutation"]},
-            {"q": "What is the event loop in Node.js and how does it work?", "keywords": ["single-threaded", "callback queue", "microtask", "async", "non-blocking"]},
-            {"q": "How does React's reconciliation algorithm (diffing) work?", "keywords": ["virtual DOM", "fiber", "key", "diff", "re-render"]},
-            {"q": "What are the differences between SQL and NoSQL databases?", "keywords": ["schema", "ACID", "scalability", "document", "relational"]},
-        ],
-        "hr": [
-            {"q": "Tell me about a time you improved the performance of a web application.", "keywords": ["optimization", "caching", "lazy loading", "profiling", "metrics"]},
-            {"q": "How do you handle code reviews and giving/receiving feedback?", "keywords": ["constructive", "review", "PR", "standards", "learning"]},
-        ]
-    },
-    "Cybersecurity Analyst": {
-        "dsa": [
-            {"q": "Implement a Bloom filter for fast membership testing in security logs.", "keywords": ["hash function", "false positive", "space-efficient", "probabilistic"]},
-            {"q": "Design a rate limiter to prevent brute force attacks.", "keywords": ["sliding window", "token bucket", "Redis", "IP", "counter"]},
-        ],
-        "technical": [
-            {"q": "Explain the difference between symmetric and asymmetric encryption.", "keywords": ["AES", "RSA", "key exchange", "public key", "private key", "TLS"]},
-            {"q": "What is SQL injection and how do you prevent it?", "keywords": ["prepared statements", "parameterized", "input validation", "ORM", "sanitize"]},
-            {"q": "Explain the OWASP Top 10 vulnerabilities.", "keywords": ["injection", "XSS", "CSRF", "authentication", "exposure"]},
-            {"q": "How does a man-in-the-middle attack work?", "keywords": ["interception", "certificate", "SSL", "ARP spoofing", "HTTPS"]},
-        ],
-        "hr": [
-            {"q": "Describe how you would respond to a security incident.", "keywords": ["incident response", "containment", "forensics", "reporting", "recovery"]},
-            {"q": "How do you keep your threat intelligence up to date?", "keywords": ["CVE", "feeds", "community", "research", "patching"]},
-        ]
-    }
-}
-
-
-async def generate_interview_questions(job_role: str) -> List[Dict]:
+async def generate_interview_questions(
+    job_role: str,
+    skills: Optional[List[str]] = None,
+    difficulty: str = "Medium",
+) -> List[Dict]:
     """
-    Generate interview questions for a given role using LLM + question bank.
-    Returns a list of question objects.
+    Generate interview questions for a given role using Gemini.
+    Keeps the existing route/service function name intact.
     """
-    # Start with predefined questions
-    base_questions = []
-    role_bank = QUESTION_BANK.get(job_role, QUESTION_BANK.get("Full Stack Developer", {}))
-
-    for category in ["dsa", "technical", "hr"]:
-        questions = role_bank.get(category, [])
-        for i, q_data in enumerate(questions[:3]):  # Max 3 per category
-            base_questions.append({
-                "id": f"{category}_{i+1}",
-                "question": q_data["q"],
-                "category": category,
-                "difficulty": "Medium" if category != "hr" else "N/A",
-                "expected_keywords": q_data.get("keywords", [])
-            })
-
-    # Try to augment with LLM-generated questions
-    try:
-        llm_questions = await _generate_llm_questions(job_role)
-        base_questions.extend(llm_questions)
-    except Exception as e:
-        logger.warning(f"LLM question generation failed: {e}")
-
-    # Shuffle and limit to ~9-12 questions
-    import random
-    random.shuffle(base_questions)
-    return base_questions[:9]
-
-
-async def _generate_llm_questions(job_role: str) -> List[Dict]:
-    """Generate additional questions via LLM"""
-    prompt = f"""Generate 3 technical interview questions for a {job_role} position.
-
-Return ONLY valid JSON array (no markdown):
-[
-  {{
-    "id": "llm_1",
-    "question": "Question text here",
-    "category": "technical",
-    "difficulty": "Medium",
-    "expected_keywords": ["keyword1", "keyword2", "keyword3"]
-  }}
-]
-
-Make them challenging and role-specific. Return exactly 3 questions."""
-
-    response = await call_gemini(prompt)
-    
-    try:
-        clean = re.sub(r'```json\s*|\s*```', '', response).strip()
-        questions = json.loads(clean)
-        # Validate structure
-        valid = []
-        for q in questions:
-            if isinstance(q, dict) and "question" in q:
-                valid.append({
-                    "id": q.get("id", f"llm_{uuid.uuid4().hex[:6]}"),
-                    "question": q["question"],
-                    "category": q.get("category", "technical"),
-                    "difficulty": q.get("difficulty", "Medium"),
-                    "expected_keywords": q.get("expected_keywords", [])
-                })
-        return valid
-    except Exception:
-        return []
+    return await generate_gemini_interview_questions(
+        job_role=job_role,
+        skills=skills or [],
+        difficulty=difficulty,
+    )
 
 
 async def evaluate_answer(
