@@ -14,6 +14,7 @@ from routes.resume_routes import router as resume_router
 from routes.analysis_routes import router as analysis_router
 from routes.roadmap_routes import router as roadmap_router
 from routes.interview_routes import router as interview_router
+from routes.auth_routes import router as auth_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -53,6 +54,7 @@ app.include_router(resume_router, prefix="/api", tags=["Resume"])
 app.include_router(analysis_router, prefix="/api", tags=["Analysis"])
 app.include_router(roadmap_router, prefix="/api", tags=["Roadmap"])
 app.include_router(interview_router, prefix="/api", tags=["Interview"])
+app.include_router(auth_router, prefix="/api", tags=["Auth"])
 
 
 @app.get("/")

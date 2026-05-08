@@ -40,6 +40,13 @@
   .input-field {
     @apply w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/30 transition-all;
   }
+  .otp-input {
+    @apply w-12 h-14 text-center text-xl font-bold bg-white/5 border border-white/10 rounded-xl text-slate-100 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 transition-all duration-150 caret-primary-500;
+  }
+  .otp-input:not(:placeholder-shown),
+  .otp-input:focus {
+    @apply border-primary-500/50 bg-white/10;
+  }
 }
 
 /* Gradient mesh background */
