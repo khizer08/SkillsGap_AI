@@ -1,11 +1,59 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Code2, ExternalLink, ChevronDown, ChevronRight, Layers, Star, MessageSquare } from 'lucide-react'
+import { BookOpen, Code2, ExternalLink, ChevronDown, ChevronRight, Layers, Star, MessageSquare, Loader2, AlertCircle } from 'lucide-react'
+
+const toArray = (value) => Array.isArray(value) ? value : []
+
+const safeResource = (value) => {
+  const text = String(value || '').trim()
+  if (!text) return null
+
+  const href = /^https?:\/\//i.test(text) ? text : `https://${text}`
+  try {
+    const url = new URL(href)
+    return {
+      href: url.href,
+      label: url.hostname.replace('www.', '') || text,
+    }
+  } catch {
+    return {
+      href: `https://www.google.com/search?q=${encodeURIComponent(text)}`,
+      label: text,
+    }
+  }
+}
 
 export default function RoadmapPage({ appState, updateState }) {
   const navigate = useNavigate()
-  const { roadmapData, analysisData } = appState
+  const { roadmapData, analysisData, roadmapStatus, roadmapError } = appState
   const [openWeek, setOpenWeek] = useState(0)
+
+  if (roadmapStatus === 'generating') {
+    return (
+      <main className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <div className="card py-12">
+          <Loader2 size={28} className="animate-spin text-primary-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-200 mb-2">Generating your roadmap</h1>
+          <p className="text-slate-500">
+            Gemini is building a personalized week-by-week plan. Keep this page open.
+          </p>
+        </div>
+      </main>
+    )
+  }
+
+  if (roadmapStatus === 'error') {
+    return (
+      <main className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <div className="card py-12">
+          <AlertCircle size={28} className="text-red-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-200 mb-2">Roadmap generation failed</h1>
+          <p className="text-slate-500 mb-6">{roadmapError || 'Please try generating the roadmap again.'}</p>
+          <button onClick={() => navigate('/dashboard')} className="btn-primary">Back to Dashboard</button>
+        </div>
+      </main>
+    )
+  }
 
   if (!roadmapData) {
     return (
@@ -16,7 +64,24 @@ export default function RoadmapPage({ appState, updateState }) {
     )
   }
 
-  const { weeks = [], project_suggestions = [], course_recommendations = [], job_role, missing_skills = [] } = roadmapData
+  const weeks = toArray(roadmapData?.weeks)
+  const project_suggestions = toArray(roadmapData?.project_suggestions)
+  const course_recommendations = toArray(roadmapData?.course_recommendations)
+  const missing_skills = toArray(roadmapData?.missing_skills)
+  const job_role = roadmapData?.job_role || analysisData?.job_role || 'Selected Role'
+
+  if (!weeks.length) {
+    return (
+      <main className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <div className="card py-12">
+          <AlertCircle size={28} className="text-amber-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-200 mb-2">Roadmap data is incomplete</h1>
+          <p className="text-slate-500 mb-6">The backend responded, but no weekly plan was available.</p>
+          <button onClick={() => navigate('/dashboard')} className="btn-primary">Generate Again</button>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-10">
@@ -33,7 +98,11 @@ export default function RoadmapPage({ appState, updateState }) {
         {/* Weekly plan */}
         <div className="lg:col-span-2 space-y-3 animate-fade-up-2">
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">Weekly Schedule</h2>
-          {weeks.map((week, i) => (
+          {weeks.map((week, i) => {
+            const tasks = toArray(week?.tasks)
+            const resources = toArray(week?.resources).map(safeResource).filter(Boolean)
+
+            return (
             <div key={i} className="card overflow-hidden">
               <button
                 onClick={() => setOpenWeek(openWeek === i ? -1 : i)}
@@ -41,11 +110,11 @@ export default function RoadmapPage({ appState, updateState }) {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center text-xs font-bold text-primary-400 shrink-0">
-                    W{week.week}
+                    W{week?.week || i + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-200">{week.topic}</p>
-                    <p className="text-xs text-slate-500">{week.tasks?.length || 0} tasks</p>
+                    <p className="text-sm font-semibold text-slate-200">{week?.topic || `Week ${i + 1}`}</p>
+                    <p className="text-xs text-slate-500">{tasks.length} tasks</p>
                   </div>
                 </div>
                 {openWeek === i
@@ -60,30 +129,33 @@ export default function RoadmapPage({ appState, updateState }) {
                   <div>
                     <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Tasks</p>
                     <ul className="space-y-1.5">
-                      {(week.tasks || []).map((task, ti) => (
+                      {tasks.map((task, ti) => (
                         <li key={ti} className="flex items-start gap-2 text-sm text-slate-300">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary-500 mt-1.5 shrink-0" />
                           {task}
                         </li>
                       ))}
+                      {tasks.length === 0 && (
+                        <li className="text-sm text-slate-500">No tasks listed for this week.</li>
+                      )}
                     </ul>
                   </div>
 
                   {/* Resources */}
-                  {week.resources?.length > 0 && (
+                  {resources.length > 0 && (
                     <div>
                       <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-2">Resources</p>
                       <div className="flex flex-wrap gap-2">
-                        {week.resources.map((url, ri) => (
+                        {resources.map((resource, ri) => (
                           <a
                             key={ri}
-                            href={url}
+                            href={resource.href}
                             target="_blank"
                             rel="noreferrer"
                             className="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 bg-primary-500/8 px-2.5 py-1 rounded-lg border border-primary-500/15 transition-colors"
                           >
                             <ExternalLink size={10} />
-                            {new URL(url.startsWith('http') ? url : 'https://' + url).hostname.replace('www.', '')}
+                            {resource.label}
                           </a>
                         ))}
                       </div>
@@ -102,7 +174,8 @@ export default function RoadmapPage({ appState, updateState }) {
                 </div>
               )}
             </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Sidebar */}
@@ -116,22 +189,25 @@ export default function RoadmapPage({ appState, updateState }) {
               {project_suggestions.map((p, i) => (
                 <div key={i} className="card">
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="text-sm font-semibold text-slate-200">{p.title}</p>
+                    <p className="text-sm font-semibold text-slate-200">{p?.title || 'Project idea'}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-                      p.difficulty === 'Beginner' ? 'bg-emerald-500/15 text-emerald-400'
-                      : p.difficulty === 'Intermediate' ? 'bg-amber-500/15 text-amber-400'
+                      p?.difficulty === 'Beginner' ? 'bg-emerald-500/15 text-emerald-400'
+                      : p?.difficulty === 'Intermediate' ? 'bg-amber-500/15 text-amber-400'
                       : 'bg-red-500/15 text-red-400'
-                    }`}>{p.difficulty}</span>
+                    }`}>{p?.difficulty || 'Advanced'}</span>
                   </div>
-                  <p className="text-xs text-slate-500 mb-2">{p.description}</p>
+                  <p className="text-xs text-slate-500 mb-2">{p?.description || 'Practice the roadmap skills in a focused portfolio project.'}</p>
                   <div className="flex flex-wrap gap-1">
-                    {(p.skills_covered || []).map((s, si) => (
+                    {toArray(p?.skills_covered).map((s, si) => (
                       <span key={si} className="skill-badge bg-white/5 text-slate-400 border border-white/8">{s}</span>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-600 mt-2">⏱ {p.estimated_time}</p>
+                  <p className="text-xs text-slate-600 mt-2">Time: {p?.estimated_time || 'Self-paced'}</p>
                 </div>
               ))}
+              {project_suggestions.length === 0 && (
+                <div className="card text-sm text-slate-500">No project ideas returned yet.</div>
+              )}
             </div>
           </div>
 
@@ -141,22 +217,28 @@ export default function RoadmapPage({ appState, updateState }) {
               <BookOpen size={13} /> Courses
             </h2>
             <div className="space-y-3">
-              {course_recommendations.map((c, i) => (
-                <a key={i} href={c.url} target="_blank" rel="noreferrer"
+              {course_recommendations.map((c, i) => {
+                const resource = safeResource(c?.url || c?.platform || c?.title)
+                return (
+                <a key={i} href={resource?.href || '#'} target="_blank" rel="noreferrer"
                   className="card block hover:border-primary-500/30 transition-colors group">
                   <div className="flex items-start gap-2 mb-1">
                     <Star size={12} className="text-amber-400 mt-0.5 shrink-0" />
-                    <p className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{c.title}</p>
+                    <p className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">{c?.title || 'Recommended course'}</p>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <span>{c.platform}</span>
+                    <span>{c?.platform || 'Online'}</span>
                     <span>·</span>
-                    <span>{c.duration}</span>
+                    <span>{c?.duration || 'Self-paced'}</span>
                     <span>·</span>
-                    <span className="text-emerald-500">{c.price}</span>
+                    <span className="text-emerald-500">{c?.price || 'Free/Paid'}</span>
                   </div>
                 </a>
-              ))}
+                )
+              })}
+              {course_recommendations.length === 0 && (
+                <div className="card text-sm text-slate-500">No course recommendations returned yet.</div>
+              )}
             </div>
           </div>
 

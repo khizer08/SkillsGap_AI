@@ -28,6 +28,8 @@ _active_sessions: Dict[str, Dict] = {}
 class StartInterviewRequest(BaseModel):
     job_role: str
     session_id: Optional[str] = None
+    skills: Optional[List[str]] = []
+    difficulty: Optional[str] = "Medium"
 
 
 class SubmitAnswerRequest(BaseModel):
@@ -46,7 +48,11 @@ async def start_interview(request: StartInterviewRequest):
         raise HTTPException(status_code=400, detail="job_role is required")
 
     try:
-        questions = await generate_interview_questions(request.job_role)
+        questions = await generate_interview_questions(
+            job_role=request.job_role,
+            skills=request.skills or [],
+            difficulty=request.difficulty or "Medium"
+        )
     except Exception as e:
         logger.error(f"Interview generation error: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate questions")

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Map, MessageSquare, RefreshCw } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, XCircle, ArrowRight, Map, MessageSquare, RefreshCw, Loader2, AlertCircle } from 'lucide-react'
 import { generateRoadmap } from '../utils/api'
 import SkillGapChart from '../components/SkillGapChart'
 
@@ -11,6 +11,7 @@ export default function DashboardPage({ appState, updateState }) {
   const { analysisData, resumeData, sessionId } = appState
   const [tab, setTab]       = useState('All')
   const [loading, setLoading] = useState(false)
+  const requestSeq = useRef(0)
 
   if (!analysisData) {
     return (
@@ -23,7 +24,14 @@ export default function DashboardPage({ appState, updateState }) {
     )
   }
 
-  const { have_skills, partial_skills, missing_skills, match_percentage, job_role, recommendation } = analysisData
+  const {
+    have_skills = [],
+    partial_skills = [],
+    missing_skills = [],
+    match_percentage = 0,
+    job_role = appState.selectedRole || 'Selected Role',
+    recommendation,
+  } = analysisData || {}
   const allSkills = [
     ...have_skills.map(s => ({ ...s, status: 'have' })),
     ...partial_skills.map(s => ({ ...s, status: 'partial' })),
@@ -39,20 +47,50 @@ export default function DashboardPage({ appState, updateState }) {
     : match_percentage >= 60 ? 'text-amber-400' : 'text-red-400'
 
   const handleRoadmap = async () => {
+    if (loading) return
+    const requestId = requestSeq.current + 1
+    requestSeq.current = requestId
     setLoading(true)
+    updateState({ roadmapStatus: 'generating', roadmapError: '' })
+
+    const payload = {
+      session_id: sessionId,
+      job_role,
+      missing_skills: missing_skills.map(s => s.skill).filter(Boolean),
+      have_skills: have_skills.map(s => s.skill).filter(Boolean),
+    }
+
+    console.debug('[roadmap:start]', payload)
     try {
-      const { data } = await generateRoadmap({
-        session_id: sessionId,
-        job_role,
-        missing_skills: missing_skills.map(s => s.skill),
-        have_skills: have_skills.map(s => s.skill),
+      const { data } = await generateRoadmap(payload)
+      const valid = data && Array.isArray(data.weeks) && data.weeks.length > 0
+      console.debug('[roadmap:response]', {
+        valid,
+        weeks: data?.weeks?.length,
+        session_id: data?.session_id,
       })
-      updateState({ roadmapData: data })
+
+      if (requestSeq.current !== requestId) {
+        console.debug('[roadmap:stale-response]', { requestId, latest: requestSeq.current })
+        return
+      }
+
+      if (!valid) {
+        throw new Error('Roadmap response did not include a valid weekly plan.')
+      }
+
+      updateState({ roadmapData: data, roadmapStatus: 'ready', roadmapError: '' })
       navigate('/roadmap')
-    } catch {
-      alert('Roadmap generation failed. Check backend.')
+    } catch (error) {
+      console.error('[roadmap:error]', error?.response?.data || error)
+      if (requestSeq.current === requestId) {
+        updateState({
+          roadmapStatus: 'error',
+          roadmapError: error.response?.data?.detail || error.message || 'Roadmap generation failed. Please try again.',
+        })
+      }
     } finally {
-      setLoading(false)
+      if (requestSeq.current === requestId) setLoading(false)
     }
   }
 
@@ -167,10 +205,28 @@ export default function DashboardPage({ appState, updateState }) {
             <button
               onClick={handleRoadmap}
               disabled={loading}
-              className="btn-primary flex items-center gap-2 mx-auto disabled:opacity-60"
+              className="btn-primary flex items-center gap-2 mx-auto disabled:opacity-60 disabled:cursor-wait"
             >
-              {loading ? 'Generating…' : (<><Map size={16} /> Generate Roadmap <ArrowRight size={16} /></>)}
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  Generating roadmap with Gemini…
+                </>
+              ) : (
+                <><Map size={16} /> Generate Roadmap <ArrowRight size={16} /></>
+              )}
             </button>
+            {loading && (
+              <p className="text-xs text-slate-500 mt-4">
+                This can take a minute while Gemini builds your weekly plan.
+              </p>
+            )}
+            {appState.roadmapStatus === 'error' && appState.roadmapError && (
+              <div className="mt-4 max-w-xl mx-auto flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400 text-left">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                {appState.roadmapError}
+              </div>
+            )}
           </div>
         )}
       </div>

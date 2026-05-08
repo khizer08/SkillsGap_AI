@@ -4,7 +4,7 @@ Roadmap Routes - /api/generate-roadmap
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import List, Optional
 import logging
 from config.database import get_collection
@@ -45,21 +45,26 @@ async def create_roadmap(request: RoadmapRequest):
 
     roadmap["session_id"] = request.session_id
 
+    try:
+        data = RoadmapResult(
+            session_id=request.session_id,
+            job_role=roadmap["job_role"],
+            missing_skills=roadmap["missing_skills"],
+            weeks=roadmap["weeks"],
+            total_duration_weeks=roadmap["total_duration_weeks"],
+            project_suggestions=roadmap["project_suggestions"],
+            course_recommendations=roadmap["course_recommendations"]
+        )
+    except (KeyError, ValidationError) as e:
+        logger.error(f"Roadmap response validation failed: {e}")
+        raise HTTPException(status_code=502, detail="Roadmap generation returned invalid data")
+
     # Persist to MongoDB
     collection = get_collection("roadmaps")
     if collection is not None:
         try:
             existing = await collection.find_one({"session_id": request.session_id}, {"_id": 1})
             if existing is None:
-                data = RoadmapResult(
-                    session_id=request.session_id,
-                    job_role=roadmap["job_role"],
-                    missing_skills=roadmap["missing_skills"],
-                    weeks=roadmap["weeks"],
-                    total_duration_weeks=roadmap["total_duration_weeks"],
-                    project_suggestions=roadmap["project_suggestions"],
-                    course_recommendations=roadmap["course_recommendations"]
-                )
                 insert_result = await collection.insert_one(data.dict())
                 logger.info(
                     f"MongoDB insert successful: collection=roadmaps, "
