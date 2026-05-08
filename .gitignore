@@ -1,6 +1,3 @@
-# Project info (optional ignore)
-PROJECT_INFO/
-
 # Python
 __pycache__/
 *.pyc

@@ -1,5 +1,8 @@
 import React, { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
 import UploadPage from './pages/UploadPage'
 import DashboardPage from './pages/DashboardPage'
 import RoadmapPage from './pages/RoadmapPage'
@@ -22,17 +25,26 @@ export default function App() {
   const updateState = (patch) => setAppState(prev => ({ ...prev, ...patch }))
 
   return (
-    <div className="min-h-screen bg-mesh">
-      <Navbar appState={appState} />
-      <ErrorBoundary>
-        <Routes>
-          <Route path="/"          element={<UploadPage   appState={appState} updateState={updateState} />} />
-          <Route path="/dashboard" element={<DashboardPage appState={appState} updateState={updateState} />} />
-          <Route path="/roadmap"   element={<RoadmapPage  appState={appState} updateState={updateState} />} />
-          <Route path="/interview" element={<InterviewPage appState={appState} updateState={updateState} />} />
-          <Route path="*"          element={<Navigate to="/" />} />
-        </Routes>
-      </ErrorBoundary>
-    </div>
+    <AuthProvider>
+      <div className="min-h-screen bg-mesh">
+        <Navbar appState={appState} />
+        <ErrorBoundary>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected */}
+            <Route path="/"          element={<ProtectedRoute><UploadPage    appState={appState} updateState={updateState} /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage appState={appState} updateState={updateState} /></ProtectedRoute>} />
+            <Route path="/roadmap"   element={<ProtectedRoute><RoadmapPage   appState={appState} updateState={updateState} /></ProtectedRoute>} />
+            <Route path="/interview" element={<ProtectedRoute><InterviewPage appState={appState} updateState={updateState} /></ProtectedRoute>} />
+
+            {/* Catch-all */}
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </ErrorBoundary>
+      </div>
+    </AuthProvider>
   )
 }
+

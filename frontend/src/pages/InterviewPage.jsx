@@ -92,12 +92,12 @@ export default function InterviewPage({ appState }) {
           <MessageSquare size={30} className="text-primary-400" />
         </div>
         <h1 className="text-3xl font-extrabold mb-3">Mock Interview</h1>
-        <p className="text-slate-400 mb-8 text-sm leading-relaxed">
+        <p className="text-white/60 mb-8 text-sm leading-relaxed">
           AI-generated DSA, technical, and HR questions tailored to your target role. Get scored and get feedback.
         </p>
 
         <div className="card text-left mb-6 space-y-3">
-          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Select Role</label>
+          <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Select Role</label>
           <div className="grid grid-cols-2 gap-2">
             {ROLES.map(r => (
               <button
@@ -106,7 +106,7 @@ export default function InterviewPage({ appState }) {
                 className={`px-3 py-2.5 rounded-xl text-sm font-medium text-left transition-all border ${
                   selectedRole === r
                     ? 'bg-primary-500/20 border-primary-500/40 text-primary-300'
-                    : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200 hover:bg-white/8'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:text-white/80 hover:bg-white/8'
                 }`}
               >
                 {r}
@@ -136,7 +136,7 @@ export default function InterviewPage({ appState }) {
       <main className="max-w-3xl mx-auto px-6 py-10 animate-fade-up">
         {/* Progress */}
         <div className="mb-8">
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+          <div className="flex items-center justify-between text-xs text-white/60 mb-2">
             <span>Question {currentIdx + 1} of {questions.length}</span>
             <span>{selectedRole}</span>
           </div>
@@ -151,7 +151,7 @@ export default function InterviewPage({ appState }) {
         {/* Question card */}
         <div className="card mb-5">
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2.5 py-1 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 bg-white/5 rounded-lg px-2.5 py-1 text-xs text-white/60">
               <Icon size={12} />
               {CATEGORY_LABELS[q.category]}
             </div>
@@ -163,7 +163,7 @@ export default function InterviewPage({ appState }) {
               }`}>{q.difficulty}</span>
             )}
           </div>
-          <p className="text-base text-slate-200 leading-relaxed">{q.question}</p>
+          <p className="text-base text-white leading-relaxed">{q.question}</p>
         </div>
 
         {/* Answer area */}
@@ -192,18 +192,18 @@ export default function InterviewPage({ appState }) {
           /* Feedback card */
           <div className="card space-y-4 border-white/10">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-slate-200">Feedback</h3>
+              <h3 className="font-semibold text-white">Feedback</h3>
               <div className={`text-2xl font-extrabold ${
                 evalFeedback.score >= 80 ? 'text-emerald-400'
                 : evalFeedback.score >= 50 ? 'text-amber-400' : 'text-red-400'
-              }`}>{Math.round(evalFeedback.score)}<span className="text-sm text-slate-500">/100</span></div>
+              }`}>{Math.round(evalFeedback.score)}<span className="text-sm text-white/60">/100</span></div>
             </div>
 
-            <p className="text-sm text-slate-300 leading-relaxed">{evalFeedback.feedback}</p>
+            <p className="text-sm text-white/80 leading-relaxed">{evalFeedback.feedback}</p>
 
             {evalFeedback.keywords_matched?.length > 0 && (
               <div>
-                <p className="text-xs text-slate-500 mb-2">Concepts covered</p>
+                <p className="text-xs text-white/50 mb-2">Concepts covered</p>
                 <div className="flex flex-wrap gap-1.5">
                   {evalFeedback.keywords_matched.map((k, i) => (
                     <span key={i} className="skill-have">{k}</span>
@@ -214,10 +214,10 @@ export default function InterviewPage({ appState }) {
 
             {evalFeedback.improvement_tips?.length > 0 && (
               <div>
-                <p className="text-xs text-slate-500 mb-2">Tips for improvement</p>
+                <p className="text-xs text-white/50 mb-2">Tips for improvement</p>
                 <ul className="space-y-1">
                   {evalFeedback.improvement_tips.map((t, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                    <li key={i} className="flex items-start gap-2 text-xs text-white/60">
                       <ChevronRight size={12} className="mt-0.5 text-primary-500 shrink-0" />
                       {t}
                     </li>
@@ -253,18 +253,18 @@ export default function InterviewPage({ appState }) {
 
         <h1 className="text-4xl font-extrabold mb-2">
           <span className={jobReady ? 'text-emerald-400' : 'text-amber-400'}>{Math.round(score)}</span>
-          <span className="text-slate-500 text-2xl">/100</span>
+          <span className="text-white/60 text-2xl">/100</span>
         </h1>
-        <p className="text-xl font-semibold mb-3 text-slate-200">{finalResult.message}</p>
-        <p className="text-slate-400 text-sm mb-8">{questions.length} questions answered</p>
+        <p className="text-xl font-semibold mb-3 text-white">{finalResult.message}</p>
+        <p className="text-white/60 text-sm mb-8">{questions.length} questions answered</p>
 
         {/* Per-question scores */}
         <div className="card mb-6 text-left">
-          <h3 className="text-sm font-semibold text-slate-400 mb-3">Question Breakdown</h3>
+          <h3 className="text-sm font-semibold text-white/60 mb-3">Question Breakdown</h3>
           <div className="space-y-2">
             {evaluations.map((e, i) => (
               <div key={i} className="flex items-center gap-3">
-                <span className="text-xs text-slate-500 w-6">Q{i+1}</span>
+                <span className="text-xs text-white/50 w-6">Q{i+1}</span>
                 <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full ${e.score >= 80 ? 'bg-emerald-500' : e.score >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
@@ -281,10 +281,10 @@ export default function InterviewPage({ appState }) {
 
         {finalResult.improvement_areas?.length > 0 && (
           <div className="card mb-6 text-left">
-            <h3 className="text-sm font-semibold text-slate-400 mb-3">Areas to Improve</h3>
+            <h3 className="text-sm font-semibold text-white/60 mb-3">Areas to Improve</h3>
             <ul className="space-y-1.5">
               {finalResult.improvement_areas.map((tip, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+                <li key={i} className="flex items-start gap-2 text-sm text-white/60">
                   <ChevronRight size={14} className="text-primary-500 mt-0.5 shrink-0" />
                   {tip}
                 </li>
