@@ -11,8 +11,8 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 # MongoDB connection
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-DB_NAME = os.getenv("DB_NAME", "skillgap_ai")
+MONGO_URI = os.getenv("MONGO_URI")
+DB_NAME = "skillgap_ai"
 
 client: AsyncIOMotorClient = None
 database = None

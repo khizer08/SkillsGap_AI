@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import logging
 from config.database import get_collection
+from models.schemas import SkillGapResult
 from services.skill_gap_engine import analyze_skill_gap, get_available_roles
 
 router = APIRouter()
@@ -56,7 +57,24 @@ async def analyze_skills(request: AnalyzeRequest):
     collection = get_collection("skill_gap_results")
     if collection is not None:
         try:
-            await collection.insert_one({**result})
+            existing = await collection.find_one({"session_id": request.session_id}, {"_id": 1})
+            if existing is None:
+                data = SkillGapResult(
+                    session_id=request.session_id,
+                    job_role=result["job_role"],
+                    match_percentage=result["match_percentage"],
+                    have_skills=result["have_skills"],
+                    partial_skills=result["partial_skills"],
+                    missing_skills=result["missing_skills"],
+                    recommendation=result["recommendation"]
+                )
+                insert_result = await collection.insert_one(data.dict())
+                logger.info(
+                    f"MongoDB insert successful: collection=skill_gap_results, "
+                    f"session={request.session_id}, id={insert_result.inserted_id}"
+                )
+            else:
+                logger.info(f"Skill gap result already persisted: session={request.session_id}")
         except Exception as e:
             logger.warning(f"MongoDB insert failed: {e}")
 

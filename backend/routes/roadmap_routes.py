@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import logging
 from config.database import get_collection
+from models.schemas import RoadmapResult
 from services.roadmap_generator import generate_roadmap
 
 router = APIRouter()
@@ -48,7 +49,24 @@ async def create_roadmap(request: RoadmapRequest):
     collection = get_collection("roadmaps")
     if collection is not None:
         try:
-            await collection.insert_one({**roadmap})
+            existing = await collection.find_one({"session_id": request.session_id}, {"_id": 1})
+            if existing is None:
+                data = RoadmapResult(
+                    session_id=request.session_id,
+                    job_role=roadmap["job_role"],
+                    missing_skills=roadmap["missing_skills"],
+                    weeks=roadmap["weeks"],
+                    total_duration_weeks=roadmap["total_duration_weeks"],
+                    project_suggestions=roadmap["project_suggestions"],
+                    course_recommendations=roadmap["course_recommendations"]
+                )
+                insert_result = await collection.insert_one(data.dict())
+                logger.info(
+                    f"MongoDB insert successful: collection=roadmaps, "
+                    f"session={request.session_id}, id={insert_result.inserted_id}"
+                )
+            else:
+                logger.info(f"Roadmap already persisted: session={request.session_id}")
         except Exception as e:
             logger.warning(f"MongoDB insert failed: {e}")
 

@@ -11,6 +11,7 @@ from typing import List, Optional, Dict, Any
 import logging
 import uuid
 from config.database import get_collection
+from models.schemas import InterviewSession
 from services.interview_engine import (
     generate_interview_questions,
     evaluate_answer,
@@ -60,6 +61,28 @@ async def start_interview(request: StartInterviewRequest):
         "evaluations": [],
         "status": "active"
     }
+
+    # Persist the generated interview session once. MongoDB creates the
+    # interview_sessions collection automatically on the first insert.
+    collection = get_collection("interview_sessions")
+    if collection is not None:
+        try:
+            existing = await collection.find_one({"session_id": interview_session_id}, {"_id": 1})
+            if existing is None:
+                data = InterviewSession(
+                    session_id=interview_session_id,
+                    job_role=request.job_role,
+                    questions=questions
+                )
+                insert_result = await collection.insert_one(data.dict())
+                logger.info(
+                    f"MongoDB insert successful: collection=interview_sessions, "
+                    f"session={interview_session_id}, id={insert_result.inserted_id}"
+                )
+            else:
+                logger.info(f"Interview session already persisted: session={interview_session_id}")
+        except Exception as e:
+            logger.warning(f"MongoDB insert failed: {e}")
 
     logger.info(f"Interview started: {interview_session_id}, role={request.job_role}, questions={len(questions)}")
 
@@ -121,6 +144,43 @@ async def submit_answer(request: SubmitAnswerRequest):
         **evaluation
     })
 
+    # Keep the single interview_sessions document current without creating
+    # duplicate documents for every submitted answer.
+    collection = get_collection("interview_sessions")
+    if collection is not None:
+        try:
+            answers_with_evaluations = [
+                {
+                    **answer,
+                    "evaluation": next(
+                        (
+                            {k: v for k, v in item.items() if k != "question_id"}
+                            for item in session["evaluations"]
+                            if item["question_id"] == answer["question_id"]
+                        ),
+                        None
+                    )
+                }
+                for answer in session["answers"]
+            ]
+            update_result = await collection.update_one(
+                {"session_id": request.interview_session_id},
+                {
+                    "$set": {
+                        "answers": answers_with_evaluations,
+                        "current_question_index": len(session["answers"]),
+                        "status": session["status"]
+                    }
+                }
+            )
+            if update_result.modified_count:
+                logger.info(
+                    f"MongoDB update successful: collection=interview_sessions, "
+                    f"session={request.interview_session_id}, answers={len(session['answers'])}"
+                )
+        except Exception as e:
+            logger.warning(f"MongoDB update failed: {e}")
+
     # Check if all questions answered
     answered_ids = {a["question_id"] for a in session["answers"]}
     all_ids = {q["id"] for q in session["questions"]}
@@ -140,18 +200,28 @@ async def submit_answer(request: SubmitAnswerRequest):
         session["final_result"] = final
         result["final_result"] = final
 
-        # Persist to MongoDB
-        collection = get_collection("interview_results")
+        # Persist completion details to the existing interview session document.
+        collection = get_collection("interview_sessions")
         if collection is not None:
             try:
-                await collection.insert_one({
-                    "interview_session_id": request.interview_session_id,
-                    "job_role": session["job_role"],
-                    "evaluations": session["evaluations"],
-                    **final
-                })
+                update_result = await collection.update_one(
+                    {"session_id": request.interview_session_id},
+                    {
+                        "$set": {
+                            "status": "completed",
+                            "total_score": final["total_score"],
+                            "final_result": final,
+                            "evaluations": session["evaluations"]
+                        }
+                    }
+                )
+                if update_result.modified_count:
+                    logger.info(
+                        f"MongoDB update successful: collection=interview_sessions, "
+                        f"session={request.interview_session_id}, status=completed"
+                    )
             except Exception as e:
-                logger.warning(f"MongoDB insert failed: {e}")
+                logger.warning(f"MongoDB update failed: {e}")
 
         logger.info(
             f"Interview completed: {request.interview_session_id}, "
