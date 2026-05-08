@@ -122,3 +122,39 @@ FastAPI Backend (:8000)
 - **Model download**: First run downloads `all-MiniLM-L6-v2` (~90MB). This is cached locally after the first download.
 
 Learn Built Upgrade :)
+
+## Deployment (Production)
+
+### 1) Backend (FastAPI)
+
+- Deploy `backend` as a web service (for example, Render/Railway).
+- Start command:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+- Set environment variables from `backend/.env.example`.
+- Important production values:
+  - `CORS_ORIGINS=https://your-frontend-domain.com`
+  - `COOKIE_SECURE=true`
+  - `COOKIE_SAMESITE=none` (only if frontend and backend are on different domains)
+
+### 2) Frontend (Vite)
+
+- Deploy `frontend` as a static site (for example, Vercel/Netlify).
+- Build command:
+
+```bash
+npm run build
+```
+
+- Publish directory: `dist`
+- Set:
+  - `VITE_API_BASE_URL=https://your-backend-domain.com/api`
+
+### 3) Local/Dev Defaults still work
+
+- If `VITE_API_BASE_URL` is not set, frontend uses `/api`.
+- Dev server proxy still points to `http://localhost:8000` by default.
+- Backend keeps local CORS defaults if `CORS_ORIGINS` is not set.
